@@ -7,6 +7,8 @@ App simples de lista de viagem em grupo.
 - **Mala geral**: itens que todo mundo precisa — qualquer pessoa adiciona e marca.
 - Listas em checkbox, separadas por áreas (Roupas, Banho & Cama, Alimentos, Eletrônicos & Eletrodomésticos, Limpeza…), com sugestões rápidas.
 - Todos veem a mala de todos; só o dono edita a sua.
+- **Roteiro (mapa do tesouro)**: a aba abre com um pergaminho se desenrolando. Um **dono do rolê** (com coroa na mala) monta e edita as paradas por dia e horário; todos veem e avaliam cada parada de 1 a 5 estrelas.
+- **App no celular (PWA)**: em `/instalar`, qualquer pessoa instala grátis no Android ou iPhone.
 
 ## Stack
 Next.js (App Router) · React · TypeScript · Tailwind CSS · Motion · SWR · Upstash Redis (Vercel Marketplace)

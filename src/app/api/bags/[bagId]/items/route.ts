@@ -1,9 +1,11 @@
+import { connection } from "next/server";
 import { getBag, listItems, saveItem } from "@/lib/db";
 import { CATEGORY_IDS } from "@/lib/constants";
 import { bad, canEdit } from "@/lib/server";
 import { GENERAL_BAG_ID, type CategoryId, type Item } from "@/lib/types";
 
 export async function GET(_req: Request, ctx: RouteContext<"/api/bags/[bagId]/items">) {
+  await connection();
   const { bagId } = await ctx.params;
   return Response.json({ items: await listItems(bagId) });
 }

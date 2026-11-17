@@ -1,10 +1,12 @@
-import { getBag, listBags, listItems, saveBag } from "@/lib/db";
+import { connection } from "next/server";
+import { getBag, getTrip, listBags, listItems, saveBag } from "@/lib/db";
 import { bad, slugify } from "@/lib/server";
 import { GENERAL_BAG_ID, type Bag } from "@/lib/types";
 
 /** All bags plus checked/total counters per bag (general included). */
 export async function GET() {
-  const bags = await listBags();
+  await connection(); // always read fresh data, never prerender
+  const [bags, trip] = await Promise.all([listBags(), getTrip()]);
   const ids = [GENERAL_BAG_ID, ...bags.map((b) => b.id)];
   const lists = await Promise.all(ids.map((id) => listItems(id)));
   const stats = Object.fromEntries(
@@ -13,7 +15,7 @@ export async function GET() {
       { total: lists[i].length, done: lists[i].filter((it) => it.checked).length },
     ]),
   );
-  return Response.json({ bags, stats });
+  return Response.json({ bags, stats, ownerId: trip.ownerId });
 }
 
 /** Login or sign up by name. Without `color`, only logs in an existing bag. */

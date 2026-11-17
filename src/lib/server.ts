@@ -22,3 +22,5 @@ export function canEdit(request: Request, bagId: string) {
 export function bad(message: string, status = 400) {
   return Response.json({ error: message }, { status });
 }
+
+export const userId = (request: Request) => request.headers.get("x-user-id") ?? "";

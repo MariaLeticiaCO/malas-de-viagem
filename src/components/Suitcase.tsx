@@ -2,11 +2,12 @@ type Props = {
   color: string;
   name: string;
   general?: boolean;
+  crown?: boolean;
   className?: string;
 };
 
 /** Illustrated suitcase; the owner's name sits on a luggage tag. */
-export function Suitcase({ color, name, general, className }: Props) {
+export function Suitcase({ color, name, general, crown, className }: Props) {
   const dark = `color-mix(in oklab, ${color} 72%, #1a1a2e)`;
   const light = `color-mix(in oklab, ${color} 70%, white)`;
   return (
@@ -41,6 +42,18 @@ export function Suitcase({ color, name, general, className }: Props) {
           </g>
         )}
       </svg>
+      {crown && (
+        <svg viewBox="0 0 64 44" className="crown-float absolute -top-[13%] left-1/2 w-[46%] -translate-x-1/2 drop-shadow-[0_4px_4px_rgba(150,90,0,0.35)]" role="img" aria-label="Dono do rolê">
+          <path d="M6 38 L2 10 L18 22 L32 4 L46 22 L62 10 L58 38 Z" fill="#FFC83D" stroke="#C98A0B" strokeWidth="3" strokeLinejoin="round" />
+          <rect x="6" y="34" width="52" height="8" rx="3" fill="#F2A900" stroke="#C98A0B" strokeWidth="3" />
+          <circle cx="32" cy="24" r="4.5" fill="#FF5A5F" />
+          <circle cx="17" cy="28" r="3" fill="#2EC4B6" />
+          <circle cx="47" cy="28" r="3" fill="#2EC4B6" />
+          <circle cx="2" cy="10" r="3" fill="#FFC83D" stroke="#C98A0B" strokeWidth="2" />
+          <circle cx="32" cy="4" r="3" fill="#FFC83D" stroke="#C98A0B" strokeWidth="2" />
+          <circle cx="62" cy="10" r="3" fill="#FFC83D" stroke="#C98A0B" strokeWidth="2" />
+        </svg>
+      )}
       {/* luggage tag */}
       <div className="absolute inset-x-[16%] top-[40%] flex justify-center">
         <span className="max-w-full -rotate-3 truncate rounded-lg border-2 border-dashed border-black/10 bg-white/95 px-2.5 py-1 font-display text-[clamp(0.8rem,3.4vw,1.05rem)] font-semibold text-slate-800 shadow-sm">

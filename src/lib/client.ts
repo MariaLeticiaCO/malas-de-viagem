@@ -1,9 +1,10 @@
 "use client";
 import { useCallback, useSyncExternalStore } from "react";
-import type { Bag, Item } from "./types";
+import type { Bag, Item, StopWithRatings } from "./types";
 
 export type Stats = Record<string, { total: number; done: number }>;
-export type BagsResponse = { bags: Bag[]; stats: Stats };
+export type BagsResponse = { bags: Bag[]; stats: Stats; ownerId: string | null };
+export type TripResponse = { ownerId: string | null; stops: StopWithRatings[] };
 export type ItemsResponse = { items: Item[] };
 
 const KEY = "malas:user";

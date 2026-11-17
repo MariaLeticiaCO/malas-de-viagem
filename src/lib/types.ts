@@ -27,3 +27,29 @@ export type CategoryId =
   | "outros";
 
 export const GENERAL_BAG_ID = "geral";
+
+export type StopKind =
+  | "passeio"
+  | "praia"
+  | "comida"
+  | "festa"
+  | "trilha"
+  | "compras"
+  | "transporte"
+  | "hospedagem";
+
+export type Stop = {
+  id: string;
+  title: string;
+  place: string;
+  date: string; // YYYY-MM-DD
+  time: string; // HH:MM
+  kind: StopKind;
+  notes: string;
+  createdAt: number;
+};
+
+/** Stop as sent to the client, with everyone's ratings (userId -> 1..5). */
+export type StopWithRatings = Stop & { ratings: Record<string, number> };
+
+export type Trip = { ownerId: string | null };

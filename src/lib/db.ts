@@ -1,11 +1,14 @@
 import "server-only";
 import { Redis } from "@upstash/redis";
-import type { Bag, Item } from "./types";
+import type { Bag, Item, Stop, Trip } from "./types";
 
 /**
  * Storage:
  *  - "bags"            hash  bagId -> Bag (JSON)
  *  - "items:<bagId>"   hash  itemId -> Item (JSON)
+ *  - "trip"            hash  "ownerId" -> bagId of the "dono do rolê"
+ *  - "stops"           hash  stopId -> Stop (JSON)
+ *  - "ratings:<stop>"  hash  bagId -> stars (1..5)
  * Uses Upstash Redis (Vercel Marketplace) when configured, otherwise an
  * in-memory store so the app also runs locally without setup.
  */
@@ -83,3 +86,27 @@ export const saveItem = (bagId: string, item: Item) =>
   store.hset(`items:${bagId}`, item.id, item);
 export const deleteItem = (bagId: string, itemId: string) =>
   store.hdel(`items:${bagId}`, itemId);
+
+export async function getTrip(): Promise<Trip> {
+  return { ownerId: (await store.hget<string>("trip", "ownerId")) ?? null };
+}
+export const setTripOwner = (ownerId: string) => store.hset("trip", "ownerId", ownerId);
+
+export async function listStops(): Promise<Stop[]> {
+  const all = await store.hgetall<Stop>("stops");
+  return Object.values(all).sort((a, b) =>
+    `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`) || a.createdAt - b.createdAt,
+  );
+}
+export const getStop = (id: string) => store.hget<Stop>("stops", id);
+export const saveStop = (stop: Stop) => store.hset("stops", stop.id, stop);
+export const deleteStop = (id: string) => store.hdel("stops", id);
+
+export async function getRatings(stopId: string): Promise<Record<string, number>> {
+  const all = await store.hgetall<number | string>(`ratings:${stopId}`);
+  return Object.fromEntries(Object.entries(all).map(([k, v]) => [k, Number(v)]));
+}
+export const setRating = (stopId: string, userId: string, stars: number) =>
+  store.hset(`ratings:${stopId}`, userId, stars);
+export const clearRating = (stopId: string, userId: string) =>
+  store.hdel(`ratings:${stopId}`, userId);
