@@ -2,7 +2,7 @@
 import { useMemo, useState } from "react";
 import useSWR from "swr";
 import { AnimatePresence, motion } from "motion/react";
-import { Check, Lock, Plus, Trash2, X } from "lucide-react";
+import { Check, Loader2, Lock, Plus, Trash2, X } from "lucide-react";
 import { CATEGORIES } from "@/lib/constants";
 import { api, fetcher, type ItemsResponse } from "@/lib/client";
 import type { Bag, CategoryId, Item } from "@/lib/types";
@@ -17,9 +17,11 @@ type Props = {
   user: Bag;
   onClose: () => void;
   onChange: () => void;
+  /** Set only for your own bag: called after you delete it. */
+  onDeleted?: () => void;
 };
 
-export function BagSheet({ bagId, title, color, editable, user, onClose, onChange }: Props) {
+export function BagSheet({ bagId, title, color, editable, user, onClose, onChange, onDeleted }: Props) {
   const key = `/api/bags/${bagId}/items`;
   const { data, mutate, isLoading } = useSWR<ItemsResponse>(key, fetcher, { refreshInterval: 4000 });
   const items = useMemo(() => data?.items ?? [], [data]);
@@ -193,8 +195,54 @@ export function BagSheet({ bagId, title, color, editable, user, onClose, onChang
               </div>
             );
           })}
+
+          {onDeleted && <DeleteBag user={user} onDeleted={onDeleted} />}
         </div>
       </motion.section>
     </motion.div>
+  );
+}
+
+/** "Cancelei a viagem": two-step confirmation, then the bag is gone for everyone. */
+function DeleteBag({ user, onDeleted }: { user: Bag; onDeleted: () => void }) {
+  const [step, setStep] = useState<"idle" | "confirm" | "busy">("idle");
+  const [error, setError] = useState("");
+
+  async function confirmDelete() {
+    setStep("busy");
+    setError("");
+    try {
+      await api(`/api/bags/${user.id}`, "DELETE", user);
+      onDeleted();
+    } catch (e) {
+      setError((e as Error).message);
+      setStep("confirm");
+    }
+  }
+
+  return (
+    <div className="mt-8 border-t border-dashed border-orange-900/15 pt-5 text-center">
+      {step === "idle" ? (
+        <button onClick={() => setStep("confirm")} className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold text-slate-400 transition hover:bg-red-50 hover:text-red-600">
+          <Trash2 size={15} /> Cancelei a viagem: excluir minha mala
+        </button>
+      ) : (
+        <div className="rounded-2xl bg-red-50 p-4 ring-1 ring-red-200">
+          <p className="font-display text-lg font-semibold text-red-700">Excluir a mala de {user.name}?</p>
+          <p className="mt-1 text-sm text-red-700/80">
+            Sua lista e suas avaliações do roteiro somem para todo mundo. Se você for o dono do rolê, a coroa fica livre. Não dá para desfazer.
+          </p>
+          {error && <p className="mt-2 text-sm font-bold text-red-700">{error}</p>}
+          <div className="mt-4 flex justify-center gap-2">
+            <button onClick={() => setStep("idle")} disabled={step === "busy"} className="rounded-full px-4 py-2 font-semibold text-slate-600 hover:bg-white">
+              Voltar
+            </button>
+            <button onClick={confirmDelete} disabled={step === "busy"} className="inline-flex items-center gap-1.5 rounded-full bg-red-600 px-4 py-2 font-semibold text-white shadow transition active:scale-95 disabled:opacity-60">
+              {step === "busy" ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />} Excluir minha mala
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

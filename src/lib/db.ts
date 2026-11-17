@@ -21,6 +21,7 @@ type Store = {
   hget<T>(key: string, field: string): Promise<T | null>;
   hset<T>(key: string, field: string, value: T): Promise<void>;
   hdel(key: string, field: string): Promise<void>;
+  del(key: string): Promise<void>;
 };
 
 function redisStore(redis: Redis): Store {
@@ -36,6 +37,9 @@ function redisStore(redis: Redis): Store {
     },
     async hdel(key: string, field: string) {
       await redis.hdel(key, field);
+    },
+    async del(key: string) {
+      await redis.del(key);
     },
   };
 }
@@ -59,6 +63,9 @@ function memoryStore(): Store {
     },
     async hdel(key: string, field: string) {
       h(key).delete(field);
+    },
+    async del(key: string) {
+      db.delete(key);
     },
   };
 }
@@ -110,3 +117,15 @@ export const setRating = (stopId: string, userId: string, stars: number) =>
   store.hset(`ratings:${stopId}`, userId, stars);
 export const clearRating = (stopId: string, userId: string) =>
   store.hdel(`ratings:${stopId}`, userId);
+
+/** Someone cancelled the trip: remove their bag, its list, their ratings,
+ *  and free the crown if they were the "dono do rolê". */
+export async function deleteBag(id: string) {
+  const [trip, stops] = await Promise.all([getTrip(), listStops()]);
+  await Promise.all([
+    store.hdel("bags", id),
+    store.del(`items:${id}`),
+    ...stops.map((s) => store.hdel(`ratings:${s.id}`, id)),
+    trip.ownerId === id ? store.hdel("trip", "ownerId") : Promise.resolve(),
+  ]);
+}

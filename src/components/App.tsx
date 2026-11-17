@@ -23,6 +23,22 @@ export function App() {
   const [intro, setIntro] = useState(false);
   const endIntro = useCallback(() => setIntro(false), []);
 
+  // The bag was deleted (maybe on another phone): confirm with a fresh read, then log out here too.
+  const missing = Boolean(user && data && !data.bags.some((b) => b.id === user.id));
+  useEffect(() => {
+    if (!missing) return;
+    let alive = true;
+    fetcher("/api/bags").then((fresh: BagsResponse) => {
+      if (alive && user && !fresh.bags.some((b) => b.id === user.id)) {
+        setOpen(null);
+        setUser(null);
+      }
+    }, () => {});
+    return () => {
+      alive = false;
+    };
+  }, [missing, user, setUser]);
+
   // Deep link from the installed app's shortcut: /?aba=roteiro
   useEffect(() => {
     if (new URLSearchParams(location.search).get("aba") === "roteiro") {
@@ -127,7 +143,17 @@ export function App() {
           <BagSheet key="geral" bagId={GENERAL_BAG_ID} title="Mala geral" color={GENERAL_BAG_COLOR} editable user={me} onClose={() => setOpen(null)} onChange={() => mutate()} />
         )}
         {openBag && (
-          <BagSheet key={openBag.id} bagId={openBag.id} title={openBag.id === user.id ? "Minha mala" : `Mala de ${openBag.name}`} color={openBag.color} editable={openBag.id === user.id} user={me} onClose={() => setOpen(null)} onChange={() => mutate()} />
+          <BagSheet
+            key={openBag.id}
+            bagId={openBag.id}
+            title={openBag.id === user.id ? "Minha mala" : `Mala de ${openBag.name}`}
+            color={openBag.color}
+            editable={openBag.id === user.id}
+            user={me}
+            onClose={() => setOpen(null)}
+            onChange={() => mutate()}
+            onDeleted={openBag.id === user.id ? () => { setOpen(null); setUser(null); mutate(); } : undefined}
+          />
         )}
       </AnimatePresence>
     </>
