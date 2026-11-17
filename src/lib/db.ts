@@ -129,3 +129,9 @@ export async function deleteBag(id: string) {
     trip.ownerId === id ? store.hdel("trip", "ownerId") : Promise.resolve(),
   ]);
 }
+
+/** Wipes the whole itinerary (all stops and their ratings). The crown stays. */
+export async function clearStops() {
+  const stops = await listStops();
+  await Promise.all([store.del("stops"), ...stops.map((s) => store.del(`ratings:${s.id}`))]);
+}

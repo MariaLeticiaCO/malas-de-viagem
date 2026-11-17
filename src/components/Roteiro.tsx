@@ -58,6 +58,9 @@ export function Roteiro({ user, bags, onOwnerChange }: Props) {
     );
   };
 
+  const clearAll = () =>
+    run({ ownerId, stops: [] }, () => api(KEY, "DELETE", user));
+
   async function save(draft: StopDraft) {
     const { id, ...fields } = draft;
     if (id) await api(`/api/roteiro/paradas/${id}`, "PATCH", user, fields);
@@ -126,6 +129,8 @@ export function Roteiro({ user, bags, onOwnerChange }: Props) {
               </ol>
             </div>
           ))}
+
+          {isOwner && stops.length > 0 && <ClearRoteiro count={stops.length} onConfirm={clearAll} />}
 
           {stops.length > 0 && (
             <motion.div initial={{ scale: 0 }} whileInView={{ scale: 1 }} viewport={{ once: true }} transition={{ type: "spring", stiffness: 260, damping: 12 }} className="mt-8 flex flex-col items-center">
@@ -367,4 +372,45 @@ function formatDay(date: string) {
 function today() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** Owner only: erase every stop, with a two-step confirmation. */
+function ClearRoteiro({ count, onConfirm }: { count: number; onConfirm: () => Promise<void> | void }) {
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  if (!confirming)
+    return (
+      <div className="mt-8 text-center">
+        <button onClick={() => setConfirming(true)} className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-bold text-ink/55 transition hover:bg-treasure/10 hover:text-treasure">
+          <Trash2 size={15} /> Apagar o roteiro inteiro
+        </button>
+      </div>
+    );
+
+  return (
+    <div className="mt-8 rounded-2xl border-2 border-dashed border-treasure/50 bg-[#fff1e6]/80 p-4 text-center">
+      <p className="font-pirate text-2xl text-treasure">Apagar o mapa todo?</p>
+      <p className="mt-1 text-sm text-ink/80">
+        {count === 1 ? "A parada" : `As ${count} paradas`} e todas as avaliações somem para todo mundo. Você continua dono do rolê. Não dá para desfazer.
+      </p>
+      <div className="mt-4 flex justify-center gap-2">
+        <button onClick={() => setConfirming(false)} disabled={busy} className="rounded-full px-4 py-2 font-semibold text-ink/70 hover:bg-ink/10">
+          Voltar
+        </button>
+        <button
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            await onConfirm();
+            setBusy(false);
+            setConfirming(false);
+          }}
+          className="inline-flex items-center gap-1.5 rounded-full bg-treasure px-4 py-2 font-semibold text-white shadow transition active:scale-95 disabled:opacity-60"
+        >
+          <Trash2 size={16} /> Apagar roteiro
+        </button>
+      </div>
+    </div>
+  );
 }
